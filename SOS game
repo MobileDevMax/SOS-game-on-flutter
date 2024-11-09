@@ -1,0 +1,161 @@
+import 'package:flutter/material.dart';
+import 'dart:math';
+
+void main() => runApp(SOSGame());
+
+class SOSGame extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'SOS Game',
+      home: PlayerSelectionScreen(),
+    );
+  }
+}
+
+class PlayerSelectionScreen extends StatefulWidget {
+  @override
+  _PlayerSelectionScreenState createState() => _PlayerSelectionScreenState();
+}
+
+class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
+  String player1 = 'Player 1';
+  String player2 = 'Player 2';
+
+  void startGame() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GameScreen(
+          player1: player1,
+          player2: player2,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Players choice")),
+      body: Center(
+        child: ElevatedButton(
+          onPressed: startGame,
+          child: Text("Start game"),
+        ),
+      ),
+    );
+  }
+}
+
+class GameScreen extends StatefulWidget {
+  final String player1;
+  final String player2;
+
+  GameScreen({required this.player1, required this.player2});
+
+  @override
+  _GameScreenState createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  late List<List<String>> grid;
+  late String currentPlayer;
+  late String letter;
+  String winner = '';
+
+  @override
+  void initState() {
+    super.initState();
+    grid = List.generate(3, (_) => List.generate(3, (_) => ''));
+    currentPlayer = widget.player1;
+    letter = Random().nextBool() ? 'S' : 'O';
+  }
+
+  void _handleTap(int x, int y) {
+    if (grid[x][y] == '' && winner == '') {
+      setState(() {
+        grid[x][y] = letter;
+        _checkWinner();
+
+        currentPlayer =
+            currentPlayer == widget.player1 ? widget.player2 : widget.player1;
+        letter = letter == 'S' ? 'O' : 'S';
+      });
+    }
+  }
+
+  void _checkWinner() {
+    for (int i = 0; i < 3; i++) {
+      if ((grid[i][0] == 'S' && grid[i][1] == 'O' && grid[i][2] == 'S') ||
+          (grid[0][i] == 'S' && grid[1][i] == 'O' && grid[2][i] == 'S')) {
+        setState(() {
+          winner = currentPlayer;
+        });
+        return;
+      }
+    }
+
+    if ((grid[0][0] == 'S' && grid[1][1] == 'O' && grid[2][2] == 'S') ||
+        (grid[0][2] == 'S' && grid[1][1] == 'O' && grid[2][0] == 'S')) {
+      setState(() {
+        winner = currentPlayer;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("SOS Game")),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            winner.isEmpty ? "Current: $currentPlayer" : "Winner: $winner",
+            style: TextStyle(fontSize: 24),
+          ),
+          SizedBox(height: 20),
+          Expanded(
+            child: GridView.builder(
+              gridDelegate:
+                  SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+              itemCount: 9,
+              itemBuilder: (context, index) {
+                int x = index ~/ 3;
+                int y = index % 3;
+                return GestureDetector(
+                  onTap: () => _handleTap(x, y),
+                  child: Container(
+                    margin: EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                      color: Colors.white,
+                    ),
+                    child: Center(
+                      child: Text(
+                        grid[x][y],
+                        style: TextStyle(fontSize: 36),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                grid = List.generate(3, (_) => List.generate(3, (_) => ''));
+                winner = '';
+                currentPlayer = widget.player1;
+                letter = Random().nextBool() ? 'S' : 'O';
+              });
+            },
+            child: Text('Start over'),
+          ),
+        ],
+      ),
+    );
+  }
+}
